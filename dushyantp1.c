@@ -5,13 +5,15 @@
  
 typedef struct 
 { 
-      int process_id, arrival_time, burst_time, priority;
+      int p, a, b, priority;
       int q, ready; 
-}process_structure; 
+      int waiting_time;
+    int turnaround_time
+}P; 
  
-int Queue(int t1) 
+int Queue(int m1) 
 { 
-      if(t1 == 0 || t1 == 1 || t1 == 2 || t1 == 3) 
+      if(m1 == 0 || m1 == 1 || m1 == 2 || m1 == 3) 
       { 
             return 1; 
       } 
@@ -23,62 +25,71 @@ int Queue(int t1)
  
 int main() 
 { 
-      int limit, count, temp_process, time, j, y; 
-      process_structure temp; 
+      int remain,n, c, temp_process, time, j, y; 
+      P temp; 
       printf("Enter Total Number of Processes:\t"); 
-      scanf("%d", &limit);  
-      process_structure process[limit]; 
-      for(count = 0; count < limit; count++) 
+      scanf("%d", &n);  
+      remain=n;
+     P process[n]; 
+      for(c = 0; c < n; c++) 
       { 
             printf("\nProcess ID:\t"); 
-            scanf("%d", &process[count].process_id); 
+            scanf("%d", &process[c].p); 
             printf("Arrival Time:\t"); 
-            scanf("%d", &process[count].arrival_time); 
+            scanf("%d", &process[c].a); 
             printf("Burst Time:\t"); 
-            scanf("%d", &process[count].burst_time); 
+            scanf("%d", &process[c].b); 
             printf("Process Priority:\t"); 
-            scanf("%d", &process[count].priority); 
-            temp_process = process[count].priority; 
-            process[count].q = Queue(temp_process);
-            process[count].ready = 0; 
+            scanf("%d", &process[c].p); 
+            temp_process = process[c].priority; 
+            process[c].q = Queue(temp_process);
+            process[c].ready = 0;
+			process[c].waiting_time = process[c].turnaround_time = 0; 
       }
-      time = process[0].burst_time; 
-      for(y = 0; y < limit; y++) 
-      { 
-            for(count = y; count < limit; count++) 
+      process[0].turnaround_time = process[0].b;
+      time = process[0].b; 
+      for(y = 0; y < n; y++) 
+      
+      {
+	  for(c=1; c<n; c++) {
+        process[c].waiting_time = process[c-1].waiting_time + process[c-1].b;
+        process[c].turnaround_time = process[c].waiting_time + process[c].b;
+    } 
+      
+            for(c = y; c < n; c++) 
             { 
-                  if(process[count].arrival_time < time) 
+                  if(process[c].a < time) 
                   {
-                        process[count].ready = 1; 
+                        process[c].ready = 1; 
                   } 
             } 
-            for(count = y; count < limit - 1; count++) 
+            for(c = y; c< n - 1; c++) 
             {
-                  for(j = count + 1; j < limit; j++) 
+                  for(j = c + 1; j < n; j++) 
                   { 
-                        if(process[count].ready == 1 && process[j].ready == 1) 
+                        if(process[c].ready == 1 && process[j].ready == 1) 
                         { 
-                              if(process[count].q == 2 && process[j].q == 1) 
+                              if(process[c].q == 2 && process[j].q == 1) 
                               { 
-                                    temp = process[count]; 
-                                    process[count] = process[j]; 
+                                    temp = process[c]; 
+                                    process[c] = process[j]; 
                                     process[j] = temp; 
                               } 
                         } 
                   } 
             } 
-            for(count = y; count < limit - 1; count++) 
+            for(c = y; c < n - 1; c++) 
             { 
-                  for(j = count + 1; j < limit; j++) 
+                  for(j = c + 1; j < n; j++) 
                   {
-                        if(process[count].ready == 1 && process[j].ready == 1) 
+                        if(process[c].ready == 1 && process[j].ready == 1) 
                         { 
-                              if(process[count].q == 1 && process[j].q == 1) 
+                              if(process[c].q == 1 && process[j].q == 1) 
                               { 
-                                    if(process[count].burst_time > process[j].burst_time) 
+                                    if(process[c].b > process[j].b) 
                                     { 
-                                          temp = process[count]; 
-                                          process[count] = process[j]; 
+                                          temp = process[c]; 
+                                          process[c] = process[j]; 
                                           process[j] = temp; 
                                     } 
                                     else 
@@ -88,17 +99,68 @@ int main()
                               } 
                         } 
                   } 
-            } 
-            printf("\nProcess[%d]:\tTime:\t%d To %d\n", process[y].process_id, time, time + process[y].burst_time); 
-            time = time + process[y].burst_time; 
-            for(count = y; count < limit; count++) 
-            { 
-                  if(process[count].ready == 1) 
+            }
+			 
+
+            for(c = y; c < n; c++) 
+            {
+                  if(process[c].ready == 1) 
                   { 
-                        process[count].ready = 0; 
+                        process[c].ready = 0; 
                   } 
-            } 
-      } 
+            }
+      }
+       table(process, n);
+       gantt(process, n);
       return 0;
 }
+void table(P p[], int n)
+{
+    int i;
+
+    puts("+-----+------------+--------------+-----------------+");
+    puts("| PID | Burst Time | Waiting Time | Turnaround Time |");
+    puts("+-----+------------+--------------+-----------------+");
+
+    for(i=0; i<n; i++) {
+        printf("| %2d  |     %2d     |      %2d      |        %2d       |\n"
+               , p[i].p, p[i].b, p[i].waiting_time, p[i].turnaround_time );
+        puts("+-----+------------+--------------+-----------------+");
+    }
+
+}
+void gantt(P p[], int n)
+{
+    int i, j;
+    printf(" ");
+    for(i=0; i<n; i++) {
+        for(j=0; j<p[i].b; j++) printf("--");
+        printf(" ");
+    }
+    printf("\n|");
+    for(i=0; i<n; i++) {
+        for(j=0; j<p[i].b - 1; j++) printf(" ");
+        printf("P%d", p[i].p);
+        for(j=0; j<p[i].b - 1; j++) printf(" ");
+        printf("|");
+    }
+    printf("\n ");
+    for(i=0; i<n; i++) {
+        for(j=0; j<p[i].b; j++) printf("--");
+        printf(" ");
+    }
+    printf("\n");
+    printf("0");
+    for(i=0; i<n; i++) {
+        for(j=0; j<p[i].b; j++) printf("  ");
+        if(p[i].turnaround_time > 9) printf("\b"); 
+        printf("%d", p[i].turnaround_time);
+
+    }
+    printf("\n");
+
+} 
+
+ 
+
 
