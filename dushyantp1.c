@@ -1,13 +1,14 @@
 
+
 #include<stdio.h> 
  
 #define N 10 
  
 typedef struct 
 { 
-      int p, a, b, priority;
+      int p, a, b, priority,r;
       int q, ready; 
-      int waiting_time;
+       int waiting_time;
     int turnaround_time
 }P; 
  
@@ -25,12 +26,13 @@ int Queue(int m1)
  
 int main() 
 { 
-      int remain,n, c, temp_process, time, j, y; 
-      P temp; 
+      int n, c, temp_process, time, j, y,wait,turnaround=0,remain,flag=0,quantum=10; 
+      
+	  P temp; 
       printf("Enter Total Number of Processes:\t"); 
       scanf("%d", &n);  
       remain=n;
-     P process[n]; 
+      P process[n]; 
       for(c = 0; c < n; c++) 
       { 
             printf("\nProcess ID:\t"); 
@@ -39,23 +41,46 @@ int main()
             scanf("%d", &process[c].a); 
             printf("Burst Time:\t"); 
             scanf("%d", &process[c].b); 
+            process[c].r=process[c].b;
             printf("Process Priority:\t"); 
             scanf("%d", &process[c].p); 
             temp_process = process[c].priority; 
             process[c].q = Queue(temp_process);
-            process[c].ready = 0;
-			process[c].waiting_time = process[c].turnaround_time = 0; 
-      }
+            process[c].ready = 0; 
+             process[c].waiting_time = process[c].turnaround_time = 0;
+      } 
       process[0].turnaround_time = process[0].b;
-      time = process[0].b; 
-      for(y = 0; y < n; y++) 
-      
-      {
-	  for(c=1; c<n; c++) {
-        process[c].waiting_time = process[c-1].waiting_time + process[c-1].b;
-        process[c].turnaround_time = process[c].waiting_time + process[c].b;
+           for(time=0,c=0;remain!=0;) 
+  { 
+    if(process[c].r<=quantum && process[c].r>0) 
+    { 
+      time+=process[c].r; 
+      process[c].r=0; 
+      flag=1; 
     } 
-      
+    else if( process[c].r>0) 
+    { 
+      process[c].r-=quantum; 
+      time+=quantum; 
+    } 
+     if(process[c].r==0 && flag==1) 
+    { 
+      remain--; 
+      wait+=time-process[c].a-process[c].b; 
+      turnaround+=time-process[c].r; 
+      flag=0; 
+    } 
+    if(c==n-1) 
+      c=0; 
+    else if( process[c].a<=time) 
+      c++; 
+    else 
+      c=0; 
+  } 
+   time = process[0].b; 
+  
+      for(y = 0; y < n; y++) 
+      { 
             for(c = y; c < n; c++) 
             { 
                   if(process[c].a < time) 
@@ -101,17 +126,25 @@ int main()
                   } 
             }
 			 
-
+	
+            printf("\nProcess[%d]:\tTime:\t%d To %d\n", process[y].p, time, time+ process[y].b); 
+            time = time + process[y].b;
             for(c = y; c < n; c++) 
-            {
+            { 
                   if(process[c].ready == 1) 
                   { 
                         process[c].ready = 0; 
                   } 
             }
-      }
-       table(process, n);
-       gantt(process, n);
+                       for(c=1; c<n; c++) {
+        process[c].waiting_time = process[c-1].waiting_time + process[c-1].b;
+        process[c].turnaround_time = process[c].waiting_time + process[c].b;
+    }
+  }
+	  table(process, n);
+  printf("\nAverage Waiting Time= %f\n",wait*1.0/n); 
+  printf("Avg Turnaround Time = %f",turnaround*1.0/n); 
+        gantt(process, n);
       return 0;
 }
 void table(P p[], int n)
@@ -160,6 +193,7 @@ void gantt(P p[], int n)
     printf("\n");
 
 } 
+
 
  
 
